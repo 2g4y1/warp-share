@@ -239,11 +239,11 @@ success "Services running"
 
 # ── Show Results ─────────────────────────────────────────────────────────────
 
-ADMIN_PATH=$(docker exec -T warp-share sh -c 'cat /data/admin_path 2>/dev/null' | tr -d '\r' | head -1)
+ADMIN_PATH=$(docker exec warp-share sh -c 'cat /data/admin_path 2>/dev/null' | tr -d '\r' | head -1)
 if [ -z "$ADMIN_PATH" ]; then
     ADMIN_PATH=$(docker logs warp-share 2>&1 | grep -oP '(Your admin path: |ADMIN_PATH.*: |admin at )\K/[A-Za-z0-9_-]+' | head -1)
 fi
-ADMIN_PASS=$(docker exec -T warp-share sh -c 'cat /data/bootstrap_admin_password 2>/dev/null' | tr -d '\r' | head -1)
+ADMIN_PASS=$(docker exec warp-share sh -c 'cat /data/bootstrap_admin_password 2>/dev/null' | tr -d '\r' | head -1)
 
 echo -e "\n${GREEN}══════════════════════════════════════════════════════════════${NC}"
 echo -e "${GREEN}                       Setup Complete${NC}"
