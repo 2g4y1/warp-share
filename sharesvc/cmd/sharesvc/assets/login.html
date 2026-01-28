@@ -43,17 +43,19 @@
   </div>
   <div class="card">
     <h2>Warp Share</h2>
+    <p class="subtitle">Admin sign‑in</p>
     {{if .Error}}<div class="err">{{.Error}}</div>{{end}}
-    <form method="post" action="{{.AdminPath}}/login">
+    <form method="post" action="{{.AdminPath}}/login" class="login-form">
       <label for="username">Username</label>
       <input id="username" name="username" autocomplete="username" />
       <label for="password">Password</label>
       <input id="password" type="password" name="password" autocomplete="current-password" />
-      <button type="submit">Login</button>
+      <button type="submit" class="primary-btn">Login</button>
     </form>
     {{if .PasskeysEnabled}}
-    <div class="passkey-divider">or</div>
+    <div class="passkey-divider"><span>or use a passkey</span></div>
     <button type="button" id="passkey_login" class="passkey-btn">Login with Passkey</button>
+    <div class="passkey-hint">Faster and more secure. Uses device biometrics or a security key.</div>
     <div id="passkey_error" class="err d-none"></div>
     {{end}}
   </div>
