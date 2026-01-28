@@ -149,6 +149,7 @@ func (a *app) handleAdminLoginForm(w http.ResponseWriter, r *http.Request) {
 	a.render(w, a.tmplLogin, map[string]any{
 		"AdminPath": a.cfg.AdminPath,
 		"Error":     "",
+		"PasskeysEnabled": a.passkeysEnabled(),
 	})
 }
 
@@ -167,6 +168,7 @@ func (a *app) handleAdminLoginSubmit(w http.ResponseWriter, r *http.Request) {
 		a.render(w, a.tmplLogin, map[string]any{
 			"AdminPath": a.cfg.AdminPath,
 			"Error":     fmt.Sprintf("Too many attempts. Please wait %d seconds.", int(retryAfter.Seconds())),
+			"PasskeysEnabled": a.passkeysEnabled(),
 		})
 		return
 	}
@@ -178,7 +180,7 @@ func (a *app) handleAdminLoginSubmit(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		recordLoginFailure(clientIP)
 		log.Printf("LOGIN FAILED: ip=%s user=%s reason=auth_error", clientIP, username)
-		a.render(w, a.tmplLogin, map[string]any{"AdminPath": a.cfg.AdminPath, "Error": "Invalid credentials"})
+		a.render(w, a.tmplLogin, map[string]any{"AdminPath": a.cfg.AdminPath, "Error": "Invalid credentials", "PasskeysEnabled": a.passkeysEnabled()})
 		return
 	}
 

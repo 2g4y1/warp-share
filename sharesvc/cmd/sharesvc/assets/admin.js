@@ -551,4 +551,187 @@
 				});
 			});
 		}
+
+		// Passkeys (WebAuthn)
+		const passkeyList = document.getElementById('passkey_list');
+		const passkeyAdd = document.getElementById('passkey_add');
+		const passkeyLabel = document.getElementById('passkey_label');
+		const passkeyMsg = document.getElementById('passkey_msg');
+		const csrfInput = document.querySelector('input[name="_csrf"]');
+
+		function showPasskeyMsg(text, isError) {
+			if (!passkeyMsg) return;
+			passkeyMsg.textContent = text || '';
+			passkeyMsg.style.color = isError ? '#ffb0b0' : '#bfefff';
+		}
+
+		function supportsPasskeys() {
+			return window.PublicKeyCredential && typeof PublicKeyCredential === 'function';
+		}
+
+		function base64urlToBuffer(baseurl) {
+			const padding = '='.repeat((4 - baseurl.length % 4) % 4);
+			const base64 = (baseurl + padding).replace(/-/g, '+').replace(/_/g, '/');
+			const raw = atob(base64);
+			const arr = new Uint8Array(raw.length);
+			for (let i = 0; i < raw.length; ++i) arr[i] = raw.charCodeAt(i);
+			return arr.buffer;
+		}
+
+		function bufferToBase64url(buf) {
+			const bytes = new Uint8Array(buf);
+			let str = '';
+			for (let i = 0; i < bytes.byteLength; i++) str += String.fromCharCode(bytes[i]);
+			return btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+		}
+
+		function credentialToJSON(cred) {
+			if (!cred) return null;
+			const out = {
+				id: cred.id,
+				rawId: bufferToBase64url(cred.rawId),
+				type: cred.type,
+				authenticatorAttachment: cred.authenticatorAttachment,
+				response: {}
+			};
+			if (cred.response) {
+				out.response.clientDataJSON = bufferToBase64url(cred.response.clientDataJSON);
+				if (cred.response.attestationObject) {
+					out.response.attestationObject = bufferToBase64url(cred.response.attestationObject);
+				}
+				if (cred.response.authenticatorData) {
+					out.response.authenticatorData = bufferToBase64url(cred.response.authenticatorData);
+				}
+				if (cred.response.signature) {
+					out.response.signature = bufferToBase64url(cred.response.signature);
+				}
+				if (cred.response.userHandle) {
+					out.response.userHandle = bufferToBase64url(cred.response.userHandle);
+				}
+			}
+			if (cred.getClientExtensionResults) {
+				out.clientExtensionResults = cred.getClientExtensionResults();
+			}
+			return out;
+		}
+
+		async function refreshPasskeys() {
+			if (!passkeyList) return;
+			const ap = getAdminPath();
+			if (!ap) return;
+			try {
+				const res = await fetch(ap + '/passkeys', { credentials: 'same-origin' });
+				if (!res.ok) return;
+				const data = await res.json();
+				const items = (data && data.items) ? data.items : [];
+				passkeyList.replaceChildren();
+				if (!items.length) {
+					const empty = document.createElement('div');
+					empty.className = 'passkey-empty';
+					empty.textContent = passkeyList.getAttribute('data-empty') || 'No passkeys';
+					passkeyList.appendChild(empty);
+					return;
+				}
+				items.forEach((item) => {
+					const row = document.createElement('div');
+					row.className = 'passkey-item';
+
+					const meta = document.createElement('div');
+					meta.className = 'passkey-meta';
+					const name = document.createElement('div');
+					name.className = 'passkey-name';
+					name.textContent = item.name || 'Passkey';
+					const dates = document.createElement('div');
+					dates.className = 'passkey-date';
+					dates.textContent = 'Created: ' + (item.created_at || '-') + (item.last_used_at ? ' • Last used: ' + item.last_used_at : '');
+					meta.appendChild(name);
+					meta.appendChild(dates);
+
+					const del = document.createElement('button');
+					del.type = 'button';
+					del.className = 'btn2';
+					del.textContent = 'Remove';
+					del.onclick = async () => {
+						if (!confirm('Remove this passkey?')) return;
+						const csrf = csrfInput ? csrfInput.value : '';
+						const resp = await fetch(ap + '/passkeys/delete', {
+							method: 'POST',
+							credentials: 'same-origin',
+							headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+							body: JSON.stringify({ id: item.id })
+						});
+						if (!resp.ok) {
+							showPasskeyMsg('Could not remove passkey', true);
+							return;
+						}
+						showPasskeyMsg('Passkey removed', false);
+						refreshPasskeys();
+					};
+
+					row.appendChild(meta);
+					row.appendChild(del);
+					passkeyList.appendChild(row);
+				});
+			} catch (_) {}
+		}
+
+		if (passkeyList) {
+			refreshPasskeys();
+		}
+
+		if (passkeyAdd) {
+			passkeyAdd.addEventListener('click', async () => {
+				showPasskeyMsg('', false);
+				if (!supportsPasskeys()) {
+					showPasskeyMsg('Passkeys not supported on this device/browser.', true);
+					return;
+				}
+				const ap = getAdminPath();
+				const csrf = csrfInput ? csrfInput.value : '';
+				const label = passkeyLabel ? passkeyLabel.value.trim() : '';
+				try {
+					const start = await fetch(ap + '/passkeys/register/start', {
+						method: 'POST',
+						credentials: 'same-origin',
+						headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf },
+						body: JSON.stringify({ name: label })
+					});
+					if (!start.ok) {
+						showPasskeyMsg('Could not start passkey registration.', true);
+						return;
+					}
+					const startData = await start.json();
+					const opts = startData && startData.options ? startData.options.publicKey : null;
+					if (!opts) {
+						showPasskeyMsg('Invalid registration options.', true);
+						return;
+					}
+					opts.challenge = base64urlToBuffer(opts.challenge);
+					opts.user.id = base64urlToBuffer(opts.user.id);
+					if (opts.excludeCredentials) {
+						opts.excludeCredentials.forEach(c => { c.id = base64urlToBuffer(c.id); });
+					}
+					const credential = await navigator.credentials.create({ publicKey: opts });
+					if (!credential) {
+						showPasskeyMsg('No credential returned.', true);
+						return;
+					}
+					const finish = await fetch(ap + '/passkeys/register/finish', {
+						method: 'POST',
+						credentials: 'same-origin',
+						headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf, 'X-WA-Session': startData.session_id || '' },
+						body: JSON.stringify(credentialToJSON(credential))
+					});
+					if (!finish.ok) {
+						showPasskeyMsg('Passkey registration failed.', true);
+						return;
+					}
+					showPasskeyMsg('Passkey registered.', false);
+					if (passkeyLabel) passkeyLabel.value = '';
+					refreshPasskeys();
+				} catch (e) {
+					showPasskeyMsg('Passkey registration cancelled or failed.', true);
+				}
+			});
+		}
 	})();

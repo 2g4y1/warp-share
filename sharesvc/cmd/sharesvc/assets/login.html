@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="{{.AdminPath}}/static/base.css">
   <link rel="stylesheet" href="{{.AdminPath}}/static/login.css">
 </head>
-<body>
+<body data-admin-path="{{.AdminPath}}" data-passkeys-enabled="{{.PasskeysEnabled}}">
   <div class="stars">
     <div class="star star-1"></div>
     <div class="star star-2"></div>
@@ -51,6 +51,14 @@
       <input id="password" type="password" name="password" autocomplete="current-password" />
       <button type="submit">Login</button>
     </form>
+    {{if .PasskeysEnabled}}
+    <div class="passkey-divider">or</div>
+    <button type="button" id="passkey_login" class="passkey-btn">Login with Passkey</button>
+    <div id="passkey_error" class="err d-none"></div>
+    {{end}}
   </div>
+  {{if .PasskeysEnabled}}
+  <script src="{{.AdminPath}}/static/login.js" defer></script>
+  {{end}}
 </body>
 </html>

@@ -74,6 +74,29 @@ CREATE TABLE IF NOT EXISTS link_ip_usage (
   PRIMARY KEY (link_id, ip)
 );
 
+CREATE TABLE IF NOT EXISTS webauthn_credentials (
+	id INTEGER PRIMARY KEY,
+	user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+	credential_id TEXT NOT NULL UNIQUE,
+	credential_json TEXT NOT NULL,
+	name TEXT,
+	created_at TEXT NOT NULL,
+	last_used_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS webauthn_challenges (
+	id TEXT PRIMARY KEY,
+	user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+	session_hash TEXT,
+	type TEXT NOT NULL,
+	session_json TEXT NOT NULL,
+	label TEXT,
+	client_ip TEXT,
+	created_at TEXT NOT NULL,
+	expires_at TEXT NOT NULL,
+	used INTEGER NOT NULL DEFAULT 0
+);
+
 CREATE INDEX IF NOT EXISTS idx_links_share ON links(share_id);
 CREATE INDEX IF NOT EXISTS idx_links_token ON links(token_hash);
 CREATE INDEX IF NOT EXISTS idx_shares_relpath ON shares(file_relpath);
@@ -81,6 +104,8 @@ CREATE INDEX IF NOT EXISTS idx_shares_slug ON shares(slug);
 CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token_hash);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 CREATE INDEX IF NOT EXISTS idx_link_ip_usage_last ON link_ip_usage(last_at);
+CREATE INDEX IF NOT EXISTS idx_webauthn_credentials_user ON webauthn_credentials(user_id);
+CREATE INDEX IF NOT EXISTS idx_webauthn_challenges_expires ON webauthn_challenges(expires_at);
 `
 	if _, err := r.db.Exec(schema); err != nil {
 		return err
@@ -91,6 +116,10 @@ CREATE INDEX IF NOT EXISTS idx_link_ip_usage_last ON link_ip_usage(last_at);
 	}
 
 	if err := r.ensureMustChangePasswordColumn(); err != nil {
+		return err
+	}
+
+	if err := r.ensureWebAuthnHandleColumn(); err != nil {
 		return err
 	}
 
@@ -150,6 +179,38 @@ func (r *Repository) ensureMustChangePasswordColumn() error {
 	}
 
 	_, err = r.db.Exec("ALTER TABLE users ADD COLUMN must_change_password INTEGER NOT NULL DEFAULT 0")
+	return err
+}
+
+func (r *Repository) ensureWebAuthnHandleColumn() error {
+	rows, err := r.db.Query("PRAGMA table_info(users)")
+	if err != nil {
+		return err
+	}
+	defer func() { _ = rows.Close() }()
+
+	for rows.Next() {
+		var cid int
+		var name, ctype string
+		var notnull int
+		var dflt sql.NullString
+		var pk int
+		if err := rows.Scan(&cid, &name, &ctype, &notnull, &dflt, &pk); err != nil {
+			return err
+		}
+		if name == "webauthn_handle" {
+			_, _ = r.db.Exec("CREATE INDEX IF NOT EXISTS idx_users_webauthn_handle ON users(webauthn_handle)")
+			return nil
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	if _, err := r.db.Exec("ALTER TABLE users ADD COLUMN webauthn_handle TEXT"); err != nil {
+		return err
+	}
+	_, err = r.db.Exec("CREATE INDEX IF NOT EXISTS idx_users_webauthn_handle ON users(webauthn_handle)")
 	return err
 }
 

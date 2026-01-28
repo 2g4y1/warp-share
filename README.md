@@ -159,6 +159,17 @@ Client → nginx (443) → warp-share → SQLite + Files
 - Cookies: `HttpOnly`, `Secure`, `SameSite=Strict`
 - Login rate limiting with exponential backoff
 
+### Passkeys (WebAuthn)
+
+- Optional passkey login for admin UI (disabled by default)
+- Enable with `PASSKEYS_ENABLED=true`
+- Required:
+  - `PASSKEYS_RP_ID` (domain without scheme/port)
+  - `PASSKEYS_RP_ORIGINS` (comma-separated origins)
+- Optional tuning:
+  - `PASSKEYS_TIMEOUT`, `PASSKEYS_USER_VERIFICATION`, `PASSKEYS_RESIDENT_KEY`
+  - `PASSKEYS_AUTHENTICATOR_ATTACHMENT`, `PASSKEYS_ATTESTATION`
+
 ### Download Links
 
 - Share slugs: 16 bytes random (128-bit)

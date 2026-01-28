@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -24,6 +25,16 @@ type config struct {
 
 	BootstrapAdminUser string
 	BootstrapAdminPass string
+
+	PasskeysEnabled              bool
+	PasskeysRPID                 string
+	PasskeysRPOrigins            []string
+	PasskeysRPDisplayName        string
+	PasskeysTimeout              time.Duration
+	PasskeysUserVerification     string
+	PasskeysResidentKey          string
+	PasskeysAuthenticatorAttach  string
+	PasskeysAttestation          string
 
 	SessionTTL time.Duration
 	GrantTTL   time.Duration
@@ -46,6 +57,13 @@ func loadConfig() (config, error) {
 		BrowseStartRel: "media",
 		SessionTTL:     24 * time.Hour,
 		GrantTTL:       7 * 24 * time.Hour,
+
+		PasskeysEnabled:          false,
+		PasskeysRPDisplayName:    "Warp Share",
+		PasskeysTimeout:          2 * time.Minute,
+		PasskeysUserVerification: "preferred",
+		PasskeysResidentKey:      "required",
+		PasskeysAttestation:      "none",
 
 		ServerReadHeaderTimeout: 5 * time.Second,
 		ServerReadTimeout:       30 * time.Second,
@@ -147,6 +165,45 @@ func loadConfig() (config, error) {
 		cfg.GrantTTL = d
 	}
 
+	if v := strings.TrimSpace(os.Getenv("PASSKEYS_ENABLED")); v != "" {
+		cfg.PasskeysEnabled = v == "1" || strings.EqualFold(v, "true") || strings.EqualFold(v, "yes")
+	}
+	if v := strings.TrimSpace(os.Getenv("PASSKEYS_RP_ID")); v != "" {
+		cfg.PasskeysRPID = v
+	}
+	if v := strings.TrimSpace(os.Getenv("PASSKEYS_RP_ORIGINS")); v != "" {
+		parts := strings.Split(v, ",")
+		var out []string
+		for _, p := range parts {
+			if s := strings.TrimSpace(p); s != "" {
+				out = append(out, s)
+			}
+		}
+		cfg.PasskeysRPOrigins = out
+	}
+	if v := strings.TrimSpace(os.Getenv("PASSKEYS_RP_DISPLAY_NAME")); v != "" {
+		cfg.PasskeysRPDisplayName = v
+	}
+	if v := strings.TrimSpace(os.Getenv("PASSKEYS_TIMEOUT")); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return config{}, fmt.Errorf("invalid PASSKEYS_TIMEOUT: %w", err)
+		}
+		cfg.PasskeysTimeout = d
+	}
+	if v := strings.TrimSpace(os.Getenv("PASSKEYS_USER_VERIFICATION")); v != "" {
+		cfg.PasskeysUserVerification = strings.ToLower(v)
+	}
+	if v := strings.TrimSpace(os.Getenv("PASSKEYS_RESIDENT_KEY")); v != "" {
+		cfg.PasskeysResidentKey = strings.ToLower(v)
+	}
+	if v := strings.TrimSpace(os.Getenv("PASSKEYS_AUTHENTICATOR_ATTACHMENT")); v != "" {
+		cfg.PasskeysAuthenticatorAttach = strings.ToLower(v)
+	}
+	if v := strings.TrimSpace(os.Getenv("PASSKEYS_ATTESTATION")); v != "" {
+		cfg.PasskeysAttestation = strings.ToLower(v)
+	}
+
 	if v := strings.TrimSpace(os.Getenv("SERVER_READ_HEADER_TIMEOUT")); v != "" {
 		d, err := time.ParseDuration(v)
 		if err != nil {
@@ -188,6 +245,21 @@ func loadConfig() (config, error) {
 			return config{}, fmt.Errorf("invalid DB_TIMEOUT: %w", err)
 		}
 		cfg.DBTimeout = d
+	}
+
+	if cfg.PasskeysEnabled {
+		if cfg.PasskeysRPID == "" || len(cfg.PasskeysRPOrigins) == 0 {
+			u, err := url.Parse(cfg.PublicBase)
+			if err != nil {
+				return config{}, fmt.Errorf("invalid PUBLIC_BASE for passkeys: %w", err)
+			}
+			if cfg.PasskeysRPID == "" {
+				cfg.PasskeysRPID = u.Hostname()
+			}
+			if len(cfg.PasskeysRPOrigins) == 0 {
+				cfg.PasskeysRPOrigins = []string{strings.TrimRight(cfg.PublicBase, "/")}
+			}
+		}
 	}
 
 	cfg.DBPath = filepath.Join(cfg.DataDir, "warp-share.sqlite")

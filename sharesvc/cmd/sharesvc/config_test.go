@@ -77,6 +77,15 @@ func TestLoadConfig(t *testing.T) {
 	origDBTimeout := os.Getenv("DB_TIMEOUT")
 	origBootstrapUser := os.Getenv("BOOTSTRAP_ADMIN_USER")
 	origBootstrapPass := os.Getenv("BOOTSTRAP_ADMIN_PASSWORD")
+	origPasskeysEnabled := os.Getenv("PASSKEYS_ENABLED")
+	origPasskeysRPID := os.Getenv("PASSKEYS_RP_ID")
+	origPasskeysRPOrigins := os.Getenv("PASSKEYS_RP_ORIGINS")
+	origPasskeysRPDisplay := os.Getenv("PASSKEYS_RP_DISPLAY_NAME")
+	origPasskeysTimeout := os.Getenv("PASSKEYS_TIMEOUT")
+	origPasskeysUV := os.Getenv("PASSKEYS_USER_VERIFICATION")
+	origPasskeysResident := os.Getenv("PASSKEYS_RESIDENT_KEY")
+	origPasskeysAttach := os.Getenv("PASSKEYS_AUTHENTICATOR_ATTACHMENT")
+	origPasskeysAttestation := os.Getenv("PASSKEYS_ATTESTATION")
 
 	// Cleanup
 	defer func() {
@@ -97,6 +106,15 @@ func TestLoadConfig(t *testing.T) {
 		_ = os.Setenv("DB_TIMEOUT", origDBTimeout)
 		_ = os.Setenv("BOOTSTRAP_ADMIN_USER", origBootstrapUser)
 		_ = os.Setenv("BOOTSTRAP_ADMIN_PASSWORD", origBootstrapPass)
+		_ = os.Setenv("PASSKEYS_ENABLED", origPasskeysEnabled)
+		_ = os.Setenv("PASSKEYS_RP_ID", origPasskeysRPID)
+		_ = os.Setenv("PASSKEYS_RP_ORIGINS", origPasskeysRPOrigins)
+		_ = os.Setenv("PASSKEYS_RP_DISPLAY_NAME", origPasskeysRPDisplay)
+		_ = os.Setenv("PASSKEYS_TIMEOUT", origPasskeysTimeout)
+		_ = os.Setenv("PASSKEYS_USER_VERIFICATION", origPasskeysUV)
+		_ = os.Setenv("PASSKEYS_RESIDENT_KEY", origPasskeysResident)
+		_ = os.Setenv("PASSKEYS_AUTHENTICATOR_ATTACHMENT", origPasskeysAttach)
+		_ = os.Setenv("PASSKEYS_ATTESTATION", origPasskeysAttestation)
 	}()
 
 	t.Run("requires PUBLIC_BASE", func(t *testing.T) {
@@ -212,6 +230,15 @@ func TestLoadConfig(t *testing.T) {
 		_ = os.Setenv("DB_TIMEOUT", "6s")
 		_ = os.Setenv("BOOTSTRAP_ADMIN_USER", "root")
 		_ = os.Setenv("BOOTSTRAP_ADMIN_PASSWORD", "secret")
+		_ = os.Setenv("PASSKEYS_ENABLED", "true")
+		_ = os.Setenv("PASSKEYS_RP_ID", "example.com")
+		_ = os.Setenv("PASSKEYS_RP_ORIGINS", "https://example.com,https://admin.example.com")
+		_ = os.Setenv("PASSKEYS_RP_DISPLAY_NAME", "Warp Share Admin")
+		_ = os.Setenv("PASSKEYS_TIMEOUT", "90s")
+		_ = os.Setenv("PASSKEYS_USER_VERIFICATION", "required")
+		_ = os.Setenv("PASSKEYS_RESIDENT_KEY", "preferred")
+		_ = os.Setenv("PASSKEYS_AUTHENTICATOR_ATTACHMENT", "platform")
+		_ = os.Setenv("PASSKEYS_ATTESTATION", "direct")
 
 		cfg, err := loadConfig()
 		if err != nil {
@@ -232,6 +259,15 @@ func TestLoadConfig(t *testing.T) {
 		}
 		if cfg.BootstrapAdminUser != "root" || cfg.BootstrapAdminPass != "secret" {
 			t.Errorf("bootstrap user/pass not loaded")
+		}
+		if !cfg.PasskeysEnabled || cfg.PasskeysRPID != "example.com" || len(cfg.PasskeysRPOrigins) != 2 {
+			t.Errorf("passkeys config not loaded")
+		}
+		if cfg.PasskeysRPDisplayName != "Warp Share Admin" || cfg.PasskeysTimeout.Seconds() != 90 {
+			t.Errorf("passkeys display/timeout not loaded")
+		}
+		if cfg.PasskeysUserVerification != "required" || cfg.PasskeysResidentKey != "preferred" || cfg.PasskeysAuthenticatorAttach != "platform" || cfg.PasskeysAttestation != "direct" {
+			t.Errorf("passkeys flags not loaded")
 		}
 	})
 

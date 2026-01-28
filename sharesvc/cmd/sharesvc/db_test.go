@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
 
+	"github.com/go-webauthn/webauthn/webauthn"
 	"golang.org/x/crypto/bcrypt"
 
 	_ "modernc.org/sqlite"
@@ -132,6 +135,99 @@ func TestAuthenticateUser(t *testing.T) {
 			t.Error("should fail for unknown user")
 		}
 	})
+}
+
+func TestWebAuthnHandleLifecycle(t *testing.T) {
+	repo := newTestDB(t)
+	ctx := context.Background()
+
+	_, err := repo.db.Exec("INSERT INTO users(id, username, password_hash, created_at) VALUES(1, 'admin', 'hash', ?)", nowRFC3339())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	h1, err := repo.GetOrCreateWebAuthnHandle(ctx, 1)
+	if err != nil {
+		t.Fatalf("GetOrCreateWebAuthnHandle error: %v", err)
+	}
+	if len(h1) == 0 {
+		t.Fatal("empty handle")
+	}
+	h2, err := repo.GetOrCreateWebAuthnHandle(ctx, 1)
+	if err != nil {
+		t.Fatalf("GetOrCreateWebAuthnHandle error: %v", err)
+	}
+	if !bytes.Equal(h1, h2) {
+		t.Fatal("handle should be stable")
+	}
+}
+
+func TestWebAuthnCredentialStore(t *testing.T) {
+	repo := newTestDB(t)
+	ctx := context.Background()
+
+	_, err := repo.db.Exec("INSERT INTO users(id, username, password_hash, created_at) VALUES(1, 'admin', 'hash', ?)", nowRFC3339())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cred := &webauthn.Credential{
+		ID:              []byte("cred-id-1"),
+		PublicKey:       []byte{1, 2, 3, 4},
+		AttestationType: "none",
+	}
+	if err := repo.SaveWebAuthnCredential(ctx, 1, "laptop", cred); err != nil {
+		t.Fatalf("SaveWebAuthnCredential error: %v", err)
+	}
+	items, err := repo.ListWebAuthnCredentials(ctx, 1)
+	if err != nil {
+		t.Fatalf("ListWebAuthnCredentials error: %v", err)
+	}
+	if len(items) != 1 || items[0].Name != "laptop" {
+		t.Fatalf("unexpected credentials: %+v", items)
+	}
+
+	cred.Authenticator.SignCount = 5
+	if err := repo.UpdateWebAuthnCredential(ctx, 1, cred); err != nil {
+		t.Fatalf("UpdateWebAuthnCredential error: %v", err)
+	}
+	items, _ = repo.ListWebAuthnCredentials(ctx, 1)
+	if items[0].LastUsedAt == "" {
+		t.Fatal("expected last_used_at to be set")
+	}
+	if err := repo.DeleteWebAuthnCredential(ctx, 1, items[0].ID); err != nil {
+		t.Fatalf("DeleteWebAuthnCredential error: %v", err)
+	}
+}
+
+func TestWebAuthnChallengeConsume(t *testing.T) {
+	repo := newTestDB(t)
+	ctx := context.Background()
+
+	_, err := repo.db.Exec("INSERT INTO users(id, username, password_hash, created_at) VALUES(1, 'admin', 'hash', ?)", nowRFC3339())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	session := webauthn.SessionData{Challenge: "test", Expires: time.Now().Add(2 * time.Minute)}
+	data, _ := json.Marshal(session)
+	challenge := WebAuthnChallenge{
+		ID:          "challenge-1",
+		UserID:      sql.NullInt64{Int64: 1, Valid: true},
+		Type:        "registration",
+		SessionJSON: string(data),
+		CreatedAt:   nowRFC3339(),
+		ExpiresAt:   session.Expires.UTC().Format(time.RFC3339),
+	}
+	if err := repo.CreateWebAuthnChallenge(ctx, challenge); err != nil {
+		t.Fatalf("CreateWebAuthnChallenge error: %v", err)
+	}
+	if _, err := repo.ConsumeWebAuthnChallenge(ctx, "challenge-1", "registration"); err != nil {
+		t.Fatalf("ConsumeWebAuthnChallenge error: %v", err)
+	}
+	if _, err := repo.ConsumeWebAuthnChallenge(ctx, "challenge-1", "registration"); !errors.Is(err, errChallengeUsed) {
+		t.Fatalf("expected errChallengeUsed, got %v", err)
+	}
 }
 
 // ============================================================================

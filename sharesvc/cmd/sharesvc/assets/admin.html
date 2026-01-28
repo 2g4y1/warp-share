@@ -245,6 +245,19 @@
 				</form>
 			</div>
 
+			{{if .PasskeysEnabled}}
+			<div class="card mb-20 p-16" id="passkeys_card">
+				<h4 class="mb-12">Passkeys</h4>
+				<p class="small">Use a passkey (device biometrics or security key) for passwordless admin login.</p>
+				<div class="passkey-actions">
+					<input id="passkey_label" name="passkey_label" placeholder="Device name (optional)" maxlength="64" />
+					<button class="btn" type="button" id="passkey_add">Add passkey</button>
+				</div>
+				<div id="passkey_list" class="passkey-list" data-empty="No passkeys registered yet."></div>
+				<div id="passkey_msg" class="small mt-8"></div>
+			</div>
+			{{end}}
+
 			<div class="card mb-20 p-16">
 				<h4 class="mb-12">Speed Limits</h4>
 				<form method="post" action="{{.AdminPath}}/speed_limit">

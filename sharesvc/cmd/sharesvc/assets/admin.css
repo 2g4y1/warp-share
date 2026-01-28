@@ -196,6 +196,15 @@ td .nowrap{white-space:nowrap}
 .gap-20{gap:20px}
 .w-200{width:200px}
 .d-none{display:none}
+.passkey-actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.passkey-actions input{max-width:320px}
+.passkey-list{margin-top:12px;border:1px solid rgba(0,255,255,.15);border-radius:14px;padding:10px;background:rgba(0,0,0,.2)}
+.passkey-item{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.08)}
+.passkey-item:last-child{border-bottom:none}
+.passkey-meta{display:flex;flex-direction:column;gap:2px}
+.passkey-name{font-weight:600}
+.passkey-date{font-size:12px;opacity:.7}
+.passkey-empty{opacity:.7;font-size:13px;padding:6px}
 .d-flex{display:flex}
 .d-inline{display:inline}
 .flex-wrap{flex-wrap:wrap}

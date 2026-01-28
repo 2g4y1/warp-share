@@ -135,6 +135,7 @@ func (a *app) handleAdminHome(w http.ResponseWriter, r *http.Request) {
 		"MediaRoot":           a.cfg.MediaRoot,
 		"BrowseStartRel":      a.cfg.BrowseStartRel,
 		"PublicBase":          a.cfg.PublicBase,
+		"PasskeysEnabled":     a.passkeysEnabled(),
 		"Tab":                 tab,
 		"Created":             created,
 		"CreatedQR":           createdQR,
@@ -265,6 +266,13 @@ func (a *app) handleAdminStaticLoginCSS(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "text/css; charset=utf-8")
 	w.Header().Set("Cache-Control", "public, max-age=3600")
 	data, _ := content.ReadFile("assets/login.css")
+	_, _ = w.Write(data)
+}
+
+func (a *app) handleAdminStaticLoginJS(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	data, _ := content.ReadFile("assets/login.js")
 	_, _ = w.Write(data)
 }
 

@@ -16,6 +16,7 @@ import (
 	"syscall"
 	"unicode/utf8"
 
+	"github.com/go-webauthn/webauthn/webauthn"
 	_ "modernc.org/sqlite"
 )
 
@@ -37,6 +38,7 @@ type app struct {
 	tmplAdmin   *template.Template
 	tmplBrowse  *template.Template
 	tmplLanding *template.Template
+	webauthn    *webauthn.WebAuthn
 }
 
 func main() {
@@ -107,6 +109,11 @@ func main() {
 	sl := NewSpeedLimiter()
 	sl.Start(cfg.DataDir, shutdownChan)
 
+	wa, err := initWebAuthn(cfg)
+	if err != nil {
+		log.Fatalf("init webauthn: %v", err)
+	}
+
 	a := &app{
 		cfg:       cfg,
 		repo:      repo,
@@ -140,6 +147,7 @@ func main() {
 		}).ParseFS(content, "assets/admin.html")),
 		tmplBrowse:  template.Must(template.ParseFS(content, "assets/browse.html")),
 		tmplLanding: template.Must(template.ParseFS(content, "assets/landing.html")),
+		webauthn:    wa,
 	}
 
 	mux := http.NewServeMux()
@@ -153,6 +161,7 @@ func main() {
 	mux.HandleFunc("GET "+cfg.AdminPath+"/static/base.css", a.handleAdminStaticBaseCSS)       // No auth - needed for login page
 	mux.HandleFunc("GET "+cfg.AdminPath+"/static/browse.css", a.handleAdminStaticBrowseCSS)   // No auth - just static CSS
 	mux.HandleFunc("GET "+cfg.AdminPath+"/static/login.css", a.handleAdminStaticLoginCSS)     // No auth - needed for login page
+	mux.HandleFunc("GET "+cfg.AdminPath+"/static/login.js", a.handleAdminStaticLoginJS)       // No auth - needed for login page
 	mux.HandleFunc("POST "+cfg.AdminPath+"/create", a.requireAdmin(a.requireCSRF(a.handleAdminCreate)))
 	mux.HandleFunc("POST "+cfg.AdminPath+"/quick_create", a.requireAdmin(a.handleAdminQuickCreate))
 	mux.HandleFunc("POST "+cfg.AdminPath+"/disable", a.requireAdmin(a.requireCSRF(a.handleAdminDisableLink)))
@@ -164,10 +173,17 @@ func main() {
 	mux.HandleFunc("GET "+cfg.AdminPath+"/logout", a.handleAdminLogout)
 	mux.HandleFunc("GET "+cfg.AdminPath+"/login", a.handleAdminLoginForm)
 	mux.HandleFunc("POST "+cfg.AdminPath+"/login", a.handleAdminLoginSubmit)
+	mux.HandleFunc("GET "+cfg.AdminPath+"/passkeys", a.requireAdmin(a.handlePasskeyList))
+	mux.HandleFunc("POST "+cfg.AdminPath+"/passkeys/register/start", a.requireAdmin(a.requireCSRF(a.handlePasskeyRegisterStart)))
+	mux.HandleFunc("POST "+cfg.AdminPath+"/passkeys/register/finish", a.requireAdmin(a.requireCSRF(a.handlePasskeyRegisterFinish)))
+	mux.HandleFunc("POST "+cfg.AdminPath+"/passkeys/delete", a.requireAdmin(a.requireCSRF(a.handlePasskeyDelete)))
+	mux.HandleFunc("POST "+cfg.AdminPath+"/passkeys/login/start", a.handlePasskeyLoginStart)
+	mux.HandleFunc("POST "+cfg.AdminPath+"/passkeys/login/finish", a.handlePasskeyLoginFinish)
 	mux.HandleFunc("POST "+cfg.AdminPath+"/speed_limit", a.requireAdmin(a.requireCSRF(a.handleAdminSpeedLimit)))
 
 	go a.cleanupExpiredSessions()
 	go a.cleanupExpiredLinks()
+	go a.cleanupExpiredWebAuthnChallenges()
 	go cleanupLoginAttempts()
 
 	// Signal handling for graceful shutdown
