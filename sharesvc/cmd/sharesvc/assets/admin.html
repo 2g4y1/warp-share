@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WARP SHARE — Admin</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23000'/><circle cx='50' cy='50' r='35' fill='none' stroke='%2300ffff' stroke-width='3'/><circle cx='50' cy='50' r='5' fill='%2300ffff'/></svg>">
+  <link rel="stylesheet" href="{{.AdminPath}}/static/base.css" />
+  <link rel="stylesheet" href="{{.AdminPath}}/static/admin.css" />
+  <script src="{{.AdminPath}}/static/app.js" defer></script>
+</head>
+<body data-admin-path="{{.AdminPath}}">
+  <div class="stars" id="stars"></div>
+  <div class="card">
+		<div class="topbar">
+      <h2 class="m-0">WARP SHARE — Admin</h2>
+    </div>
+
+		<div class="tabs justify-between">
+			<div class="d-flex gap-8 flex-wrap">
+				<a class="tab {{if eq .Tab "create"}}active{{end}}" href="{{.AdminPath}}/?tab=create">Create</a>
+				<a class="tab {{if eq .Tab "history"}}active{{end}}" href="{{.AdminPath}}/?tab=history">History</a>
+				<a class="tab {{if eq .Tab "stats"}}active{{end}}" href="{{.AdminPath}}/?tab=stats">Statistics</a>
+				<a class="tab {{if eq .Tab "settings"}}active{{end}}" href="{{.AdminPath}}/?tab=settings">Settings</a>
+			</div>
+			<a class="tab tab-logout" href="{{.AdminPath}}/logout">Logout</a>
+		</div>
+
+	{{with .Created}}
+		<div class="msg createdMsg">
+			<div class="createdTitle">
+				<div>Link created</div>
+				<div class="small">Ready to share</div>
+			</div>
+			<div class="qr items-start">
+				{{if $.CreatedQR}}<img alt="QR" src="data:image/png;base64,{{$.CreatedQR}}" />{{end}}
+				<div class="meta">
+					<div>
+						<code id="created_link" class="codePill">{{.}}</code>
+						<div class="actions justify-start">
+							<button class="btn" type="button" data-copy="{{.}}">Copy link</button>
+							<button class="btn" type="button" data-share="{{.}}">Share</button>
+						</div>
+					</div>
+					<div class="createdHint">Scan QR code or share the link.</div>
+				</div>
+			</div>
+		</div>
+		<div class="sep"></div>
+	{{end}}
+	{{with .Msg}}<div class="msg">{{.}}</div>{{end}}
+
+		{{if eq .Tab "create"}}
+			<div class="msg createMsg">
+				<h3 class="createTitle">Create new link</h3>
+				<p class="createSub">Select a file from the media directory to share.</p>
+				<form method="post" action="{{.AdminPath}}/create">
+				<input type="hidden" name="_csrf" value="{{.CSRFToken}}" />
+				<div class="grid3">
+					<div class="field">
+						<label for="relpath">File</label>
+						<div class="field-row">
+							<input id="relpath" name="relpath" placeholder="Movies/Example.mkv" value="{{.Prefill}}" />
+							<button class="btnSmall" type="button" data-action="open-picker">Browse…</button>
+							<button class="btnSmall" type="button" data-action="trigger-upload">Upload…</button>
+							<input type="file" id="upload_file" class="d-none" />
+						</div>
+						<div id="upload_status" class="small mt-6 d-none"></div>
+					</div>
+					<div class="field">
+						<label for="max_downloads">Max downloads</label>
+						<input id="max_downloads" name="max_downloads" value="1" />
+					</div>
+					<div class="field">
+						<label for="max_per_ip">Max per IP</label>
+						<input id="max_per_ip" name="max_per_ip" placeholder="1" />
+					</div>
+				</div>
+				<div class="grid2 mt-12">
+					<div class="field">
+						<label for="expires_at">Expiry date (optional)</label>
+						<input id="expires_at" type="datetime-local" name="expires_at" step="1" />
+						<div class="actions justify-start">
+							<button class="btnSmall" type="button" data-expiry-hours="1">+1h</button>
+							<button class="btnSmall" type="button" data-expiry-hours="24">+1d</button>
+							<button class="btnSmall" type="button" data-expiry-hours="168">+7d</button>
+							<button class="btnSmall" type="button" data-expiry-hours="720">+30d</button>
+							<button class="btnSmall" type="button" data-expiry-clear="1">Reset</button>
+						</div>
+					</div>
+					<div class="actions">
+						<button class="btn" type="submit">Create link</button>
+					</div>
+				</div>
+				</form>
+			</div>
+		{{end}}
+
+		{{if eq .Tab "history"}}
+			<input type="hidden" name="_csrf" value="{{.CSRFToken}}" />
+			<div class="d-flex justify-between items-center flex-wrap gap-12 mt-16">
+				<h3 class="m-0">History</h3>
+				<div class="d-flex gap-12 items-center flex-wrap">
+					<input type="text" id="history-search" placeholder="Search files..." class="w-200 search-input" />
+					<form class="inlineForm" method="post" action="{{.AdminPath}}/cleanup_links" data-confirm="Delete all inactive links (stopped, expired, exhausted) permanently?">
+						<input type="hidden" name="_csrf" value="{{.CSRFToken}}" />
+						<button class="btn2" type="submit">Delete inactive</button>
+					</form>
+				</div>
+			</div>
+
+			<table class="history-table" id="history-table">
+				<thead>
+					<tr>
+						<th class="col-status">Status</th>
+						<th>File</th>
+						<th class="col-expires">Expires</th>
+						<th class="col-used">Used</th>
+						<th class="col-created">Created</th>
+						<th class="col-action">Action</th>
+					</tr>
+				</thead>
+				<tbody>
+				{{range .Links}}
+					<tr>
+						<td class="col-status">
+							{{if eq .Status "valid"}}<span class="badge b-valid">active</span>{{end}}
+							{{if eq .Status "disabled"}}<span class="badge b-disabled">stopped</span>{{end}}
+							{{if eq .Status "expired"}}<span class="badge b-invalid">expired</span>{{end}}
+							{{if eq .Status "exhausted"}}<span class="badge b-invalid">exhausted</span>{{end}}
+						</td>
+						<td>
+							<div class="d-flex gap-10 items-center flex-wrap">
+								<a href="{{$.AdminPath}}/?tab=create&prefill={{.RelPath}}" title="{{.RelPath}}"><code>{{.RelPath | base | truncate 45}}</code></a>
+							</div>
+						</td>
+						<td class="col-expires"><span class="nowrap">{{.ExpiresRel | timeRel}}</span></td>
+						<td class="col-used"><code>{{.UsedDownloads}} / {{.MaxDownloads}}</code></td>
+						<td class="col-created"><span class="small text-preline">{{.CreatedAt}}</span></td>
+						<td class="col-action">
+							<div class="actions actionsCell">
+								{{if eq .Status "valid"}}
+									<button class="btnSmall" type="button" data-action="quick-copy" data-slug="{{.ShareSlug}}">Quick Link</button>
+								{{end}}
+								{{if eq .Status "valid"}}
+									<form class="inlineForm" method="post" action="{{$.AdminPath}}/disable" data-confirm="Disable this link?">
+										<input type="hidden" name="_csrf" value="{{$.CSRFToken}}" />
+										<input type="hidden" name="id" value="{{.LinkID}}" />
+										<button class="btn2" type="submit">Stop</button>
+									</form>
+								{{else}}
+									<form class="inlineForm" method="post" action="{{$.AdminPath}}/delete_link" data-confirm="Delete this link permanently?">
+										<input type="hidden" name="_csrf" value="{{$.CSRFToken}}" />
+										<input type="hidden" name="id" value="{{.LinkID}}" />
+										<button class="btn2" type="submit">Delete</button>
+									</form>
+								{{end}}
+							</div>
+						</td>
+					</tr>
+				{{end}}
+				</tbody>
+			</table>
+		{{end}}
+
+		{{if eq .Tab "stats"}}
+			<h3>Statistics</h3>
+			<div class="msg mb-20">
+				<div class="d-flex justify-between items-center gap-20 flex-wrap">
+					<div class="d-flex gap-20">
+						<div><b>{{.StatsTotalDownloads}}</b> total downloads</div>
+						<div><b>{{.StatsTotalShares}}</b> active shares</div>
+					</div>
+				</div>
+			</div>
+
+			<div class="row stats-row items-start">
+				<div class="col-group flex-1-5">
+					<h3 class="mt-0">Top Files</h3>
+					<table>
+						<thead><tr><th>File</th><th>Downloads</th></tr></thead>
+						<tbody>
+						{{range .StatsTopFiles}}
+							<tr>
+								<td><code class="word-break" title="{{.RelPath}}">{{.RelPath | base | truncate 40}}</code></td>
+								<td>{{.Downloads}}</td>
+							</tr>
+						{{end}}
+						</tbody>
+					</table>
+				</div>
+				<div class="col-group flex-2">
+					<div class="d-flex justify-between items-center mb-10">
+						<h3 class="m-0">Live Activity</h3>
+						<div class="small">Last 25 actions</div>
+					</div>
+					<table>
+						<thead><tr><th>Time</th><th>IP</th><th>File</th><th class="w-60">Left</th></tr></thead>
+						<tbody>
+						{{range .StatsRecentActivity}}
+							<tr>
+								<td title="{{.TimeFull}}" class="text-nowrap">{{.TimeAgo}}</td>
+								<td><code>{{.IP}}</code></td>
+								<td><code class="word-break" title="{{.RelPath}}">{{.RelPath | base | truncate 30}}</code> <span class="small">({{.Downloads}}. DL)</span></td>
+								<td><span class="badge {{if eq .RemainingDownloads "0"}}b-invalid{{else if eq .RemainingDownloads "∞"}}b-valid{{else}}b-valid{{end}}">{{.RemainingDownloads}}</span></td>
+							</tr>
+						{{end}}
+						</tbody>
+					</table>
+				</div>
+			</div>
+		{{end}}
+
+		{{if eq .Tab "settings"}}
+			<h3>Settings</h3>		{{if .MustChangePassword}}
+		<div class="msg" style="border-color:rgba(255,180,80,.65);background:rgba(255,120,40,.12);margin-bottom:16px">
+			<strong>⚠️ Password Change Required</strong>
+			<p style="margin:8px 0 0">You are using a reset password. Please change it now for security reasons.</p>
+		</div>
+		{{end}}			<div class="card mb-20 p-16">
+				<h4 class="mb-12">Admin Access</h4>
+				<form method="post" action="{{.AdminPath}}/password">
+					<input type="hidden" name="_csrf" value="{{.CSRFToken}}" />
+					<div class="row items-end">
+						<div>
+							<label for="new_username">Username</label>
+							<input id="new_username" name="new_username" value="{{.CurrentUsername}}" autocomplete="username" />
+						</div>
+						<div>
+							<label for="current_password">Current password</label>
+							<input id="current_password" type="password" name="current_password" autocomplete="current-password" />
+						</div>
+						<div>
+							<label for="new_password">New password (min. 12 characters)</label>
+							<input id="new_password" type="password" name="new_password" autocomplete="new-password" />
+						</div>
+						<div>
+							<label for="new_password2">Confirm password</label>
+							<input id="new_password2" type="password" name="new_password2" autocomplete="new-password" />
+						</div>
+						<div class="settings-actions d-flex items-end justify-end">
+							<button class="btn" type="submit">Save</button>
+						</div>
+					</div>
+				</form>
+			</div>
+
+			<div class="card mb-20 p-16">
+				<h4 class="mb-12">Speed Limits</h4>
+				<form method="post" action="{{.AdminPath}}/speed_limit">
+					<input type="hidden" name="_csrf" value="{{.CSRFToken}}" />
+					<div class="speed-grid">
+						<div class="field">
+							<label for="default_limit">Default (KB/s)</label>
+							<input id="default_limit" name="default_limit" type="number" min="0" value="{{.CurrentDefLimit}}" placeholder="0 = unlimited" />
+						</div>
+						<div class="field">
+							<label for="alt_limit">Alternative (KB/s)</label>
+							<input id="alt_limit" name="alt_limit" type="number" min="0" value="{{.CurrentAltLimit}}" placeholder="0 = unlimited" />
+						</div>
+						<div class="field">
+							<label for="alt_start">From (hour)</label>
+							<input id="alt_start" name="alt_start" type="number" min="0" max="23" value="{{.CurrentAltStart}}" />
+						</div>
+						<div class="field">
+							<label for="alt_end">Until (hour)</label>
+							<input id="alt_end" name="alt_end" type="number" min="0" max="23" value="{{.CurrentAltEnd}}" />
+						</div>
+						<div class="settings-actions d-flex items-end justify-end">
+							<button class="btn" type="submit">Save</button>
+						</div>
+					</div>
+					<div class="small mt-10 speed-hint">
+						{{.SpeedSchedule}}
+					</div>
+				</form>
+			</div>
+		{{end}}
+  </div>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Download — {{.FileName}}</title>
+	<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23000'/><circle cx='50' cy='50' r='35' fill='none' stroke='%2300ffff' stroke-width='3'/><circle cx='50' cy='50' r='5' fill='%2300ffff'/></svg>">
+	<link rel="stylesheet" href="/warp-share.css">
+	<script src="/warp-share.js" defer></script>
+</head>
+<body data-file-name="{{.FileName}}" data-home-url="{{.PublicBase}}">
+	<div class="wrap">
+		<div class="stars">
+			<div class="star star-1"></div>
+			<div class="star star-2"></div>
+			<div class="star star-3"></div>
+			<div class="star star-4"></div>
+			<div class="star star-5"></div>
+			<div class="star star-6"></div>
+			<div class="star star-7"></div>
+			<div class="star star-8"></div>
+			<div class="star star-9"></div>
+			<div class="star star-10"></div>
+			<div class="star star-11"></div>
+			<div class="star star-12"></div>
+			<div class="star star-13"></div>
+			<div class="star star-14"></div>
+			<div class="star star-15"></div>
+			<div class="star star-16"></div>
+			<div class="star star-17"></div>
+			<div class="star star-18"></div>
+			<div class="star star-19"></div>
+			<div class="star star-20"></div>
+			<div class="star star-21"></div>
+			<div class="star star-22"></div>
+			<div class="star star-23"></div>
+			<div class="star star-24"></div>
+			<div class="star star-25"></div>
+			<div class="star star-26"></div>
+			<div class="star star-27"></div>
+			<div class="star star-28"></div>
+			<div class="star star-29"></div>
+			<div class="star star-30"></div>
+		</div>
+		<div class="card">
+			<div class="header">
+				<div class="icon">
+					<svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+				</div>
+				<div>
+					<div class="title">File Download</div>
+					<div class="filename">{{.FileName}}</div>
+				</div>
+			</div>
+
+			<div class="meta">
+				<div class="meta-item">
+					<span class="meta-label">Size</span>
+					<span class="meta-value">{{.Size}}</span>
+				</div>
+				<div class="meta-item">
+					<span class="meta-label">Downloads left</span>
+					<span class="meta-value highlight">{{.Remaining}}</span>
+				</div>
+				{{if .SpeedSchedule}}
+				<div class="speed-hint">{{.SpeedSchedule}} · Current: {{.SpeedCurrent}}</div>
+				{{end}}
+			</div>
+
+			<div class="btnRow">
+				<a href="{{.DownloadURL}}" class="btn-primary" data-action="download">
+					<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+					Download Now
+				</a>
+				<div class="btn-secondary-row">
+					<button type="button" class="btn-secondary" data-action="copy">
+						<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+						Copy Link
+					</button>
+					<button type="button" class="btn-secondary" data-action="share">
+						<svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+						Share
+					</button>
+				</div>
+			</div>
+
+			<div class="footer">
+				<a href="https://github.com/2g4y1/warp-share" target="_blank" rel="noopener">🚀 Host your own → GitHub</a>
+			</div>
+		</div>
+	</div>
+</body>
+</html>

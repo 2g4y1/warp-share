@@ -1,0 +1,111 @@
+name: Go Tests
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'sharesvc/**'
+      - '.github/workflows/test.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'sharesvc/**'
+      - '.github/workflows/test.yml'
+  workflow_dispatch: # Allow manual triggers
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: sharesvc
+
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: '1.25'
+        cache-dependency-path: sharesvc/go.sum
+
+    - name: Download dependencies
+      run: go mod download
+
+    - name: Verify dependencies
+      run: go mod verify
+
+    - name: Run tests
+      run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+    - name: Display coverage
+      run: go tool cover -func=coverage.out | tail -1
+
+    - name: Upload coverage to Codecov
+      if: ${{ env.CODECOV_TOKEN != '' }}
+      uses: codecov/codecov-action@v5
+      with:
+        files: sharesvc/coverage.out
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+        token: ${{ env.CODECOV_TOKEN }}
+
+  lint:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: sharesvc
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: '1.25'
+        cache-dependency-path: sharesvc/go.sum
+
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v9
+      with:
+        version: latest
+        working-directory: sharesvc
+        args: --timeout=5m
+
+  docker-compose-smoke:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Prepare compose env
+      run: |
+        mkdir -p /tmp/warp-media/media/share
+        mkdir -p /tmp/warp-upload
+        cat > .env <<EOF
+        PUBLIC_BASE=http://localhost
+        MEDIA_ROOT=/tmp/warp-media
+        UPLOAD_TEMP=/tmp/warp-upload
+        DOMAIN=example.com
+        EOF
+
+    - name: Docker Compose build (warp-share)
+      run: docker compose -f docker-compose.yml build warp-share
+
+    - name: Docker Compose up (warp-share)
+      run: docker compose -f docker-compose.yml up -d warp-share
+
+    - name: Docker Compose status
+      run: docker compose -f docker-compose.yml ps
+
+    - name: Docker Compose down
+      if: always()
+      run: docker compose -f docker-compose.yml down

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WARP SHARE — Browse</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23000'/><circle cx='50' cy='50' r='35' fill='none' stroke='%2300ffff' stroke-width='3'/><circle cx='50' cy='50' r='5' fill='%2300ffff'/></svg>">
+  <link rel="stylesheet" href="{{.AdminPath}}/static/base.css">
+  <link rel="stylesheet" href="{{.AdminPath}}/static/browse.css">
+  <script src="{{.AdminPath}}/static/app.js" defer></script>
+</head>
+<body data-admin-path="{{.AdminPath}}" data-pick="{{if .Pick}}1{{else}}0{{end}}">
+  <div class="stars" id="stars"></div>
+  <div class="card">
+    <div class="browse-header">
+      <h2>Folder: <code>{{.Dir}}</code></h2>
+      <div><a href="{{.AdminPath}}/">Back</a></div>
+    </div>
+
+    {{if .Pick}}
+      <p class="pick-hint">Click to select a file</p>
+    {{end}}
+
+    {{if .Parent}}
+      <p><a href="{{.AdminPath}}/browse?dir={{.Parent}}{{if .Pick}}&pick=1{{end}}">.. (up one level)</a></p>
+    {{end}}
+
+    <table>
+      <thead>
+        <tr><th>Name</th><th>Type</th><th>Action</th></tr>
+      </thead>
+      <tbody>
+      {{range .Entries}}
+        <tr>
+          <td><code>{{.Name}}</code></td>
+          <td>{{if .IsDir}}Folder{{else}}File{{end}}</td>
+          <td>
+            {{if .IsDir}}
+              <a href="{{$.AdminPath}}/browse?dir={{.Rel}}{{if $.Pick}}&pick=1{{end}}">open</a>
+            {{else}}
+              {{if $.Pick}}
+                  <a href="#" class="js-pick" data-rel="{{.PickRel}}">select</a>
+              {{else}}
+                  <a href="{{$.AdminPath}}/?tab=create&prefill={{.PickRel}}">select</a>
+              {{end}}
+            {{end}}
+          </td>
+        </tr>
+      {{end}}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

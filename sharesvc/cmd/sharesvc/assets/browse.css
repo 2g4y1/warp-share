@@ -1,0 +1,51 @@
+/* WARP SHARE - Browse Page Styles */
+
+body{
+	position:relative;
+	overflow:auto;
+	padding:28px;
+	color:rgba(240,255,255,.92);
+	background:
+		radial-gradient(circle at 50% 20%,rgba(0,255,255,0.10) 0,transparent 55%),
+		radial-gradient(circle at 20% 80%,rgba(0,60,120,0.20) 0,transparent 60%),
+		#000;
+}
+html,body{height:auto;min-height:100vh}
+
+.stars{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+
+.card{
+	max-width:1120px;margin:32px auto;
+	background:rgba(0,20,40,.92);
+	border:1px solid rgba(0,255,255,.35);
+	border-radius:14px;padding:20px;
+	box-shadow:0 0 24px rgba(0,255,255,.12);
+}
+
+.browse-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.pick-hint{opacity:.85;margin-top:10px}
+
+table{width:100%;border-collapse:collapse;margin-top:10px}
+td,th{padding:10px;border-bottom:1px solid rgba(0,255,255,.18);text-align:left;color:rgba(240,255,255,.9)}
+th{color:rgba(255,255,255,.78)}
+
+/* Mobile Responsive */
+@media (max-width:768px){
+	body{padding:16px 4vw}
+	.card{padding:18px 8px;border-radius:12px;margin:24px auto}
+	h2{font-size:19px;text-align:center}
+	h2 code{font-size:15px;word-break:break-all}
+	.browse-header{flex-direction:column;gap:8px}
+	table{display:block;overflow-x:auto;margin:0 auto}
+	td,th{padding:14px 8px;font-size:16px;text-align:center}
+	td code{font-size:15px;word-break:break-all}
+	a{font-size:16px;padding:4px 0;display:inline-block}
+}
+@media (max-width:480px){
+	body{padding:10px 2vw}
+	.card{padding:12px 2vw;margin:12px auto}
+	h2{font-size:17px}
+	h2 code{font-size:14px}
+	td,th{padding:10px 4px;font-size:15px}
+	td code{font-size:14px}
+}

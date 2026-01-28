@@ -1,0 +1,107 @@
+/* WARP SHARE - Landing/Download Page Styles */
+
+body{
+	display:flex;align-items:center;justify-content:center;
+	overflow:hidden;
+}
+
+/* Notification */
+@keyframes notifSlide{from{opacity:0;transform:translate(-50%,-50%) scale(0.8)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes notifPulse{0%,100%{box-shadow:0 0 30px rgba(0,255,255,0.3),0 0 60px rgba(0,255,255,0.15)}50%{box-shadow:0 0 50px rgba(0,255,255,0.5),0 0 100px rgba(0,255,255,0.25)}}
+.notif{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:16px;padding:32px 48px;background:linear-gradient(135deg,rgba(0,50,60,0.98),rgba(0,30,40,0.99));border:2px solid rgba(0,255,255,0.5);border-radius:20px;box-shadow:0 0 30px rgba(0,255,255,0.3),0 0 60px rgba(0,255,255,0.15);animation:notifSlide 0.4s ease-out,notifPulse 2s ease-in-out infinite;text-align:center}
+.notif-icon{width:64px;height:64px;background:rgba(0,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid rgba(0,255,255,0.4)}
+.notif-icon svg{width:32px;height:32px;stroke:#0ff;fill:none;stroke-width:2}
+.notif-title{font-weight:800;color:#eaffff;font-size:22px;text-shadow:0 0 10px rgba(0,255,255,0.5)}
+.notif-msg{color:rgba(200,240,255,0.85);font-size:15px}
+
+/* Layout */
+.wrap{position:relative;z-index:1;width:100%;max-width:520px;padding:20px}
+
+/* Header */
+.header{display:flex;align-items:center;gap:16px;margin-bottom:20px}
+.icon{
+	width:56px;height:56px;
+	background:linear-gradient(135deg,rgba(0,255,255,0.15) 0%,rgba(0,180,200,0.1) 100%);
+	border:1px solid rgba(0,255,255,0.3);border-radius:14px;
+	display:flex;align-items:center;justify-content:center;
+	flex-shrink:0;
+}
+.icon svg{width:28px;height:28px;stroke:rgba(0,255,255,0.85);fill:none;stroke-width:1.5}
+.title{font-size:13px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 4px}
+.filename{font-size:17px;font-weight:600;color:#eaffff;word-break:break-all;line-height:1.4}
+
+/* Meta Info */
+.meta{
+	display:grid;grid-template-columns:1fr 1fr;gap:12px;
+	background:rgba(0,0,0,0.25);border-radius:12px;padding:14px;
+	margin:16px 0;
+}
+.meta-item{display:flex;flex-direction:column;gap:2px}
+.meta-item:first-child{text-align:left}
+.meta-item:last-child{text-align:right}
+.meta-label{font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:0.5px}
+.meta-value{font-size:15px;color:#bfefff;font-weight:500}
+.meta-value.highlight{color:#0ff}
+.speed-hint{grid-column:1/-1;font-size:12px;color:rgba(255,255,255,0.4);padding-top:4px;border-top:1px solid rgba(255,255,255,0.08);text-align:center}
+
+/* Buttons */
+.btnRow{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+.btn-primary{
+	display:flex;align-items:center;justify-content:center;gap:10px;
+	padding:14px 20px;border-radius:14px;
+	background:linear-gradient(135deg,rgba(0,255,255,0.18) 0%,rgba(0,200,220,0.12) 100%);
+	border:1px solid rgba(0,255,255,0.4);
+	color:#eaffff;text-decoration:none;font-weight:700;font-size:15px;
+	transition:all 0.2s ease;
+}
+.btn-primary:hover{background:linear-gradient(135deg,rgba(0,255,255,0.25) 0%,rgba(0,200,220,0.18) 100%);border-color:rgba(0,255,255,0.55)}
+.btn-primary svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
+.btn-secondary-row{display:flex;gap:10px}
+.btn-secondary{
+	flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+	padding:11px 14px;border-radius:12px;
+	background:rgba(0,0,0,0.2);border:1px solid rgba(0,255,255,0.18);
+	color:rgba(240,255,255,0.85);font-weight:600;font-size:13px;cursor:pointer;
+	transition:all 0.2s ease;
+}
+.btn-secondary:hover{background:rgba(0,0,0,0.3);border-color:rgba(0,255,255,0.3)}
+.btn-secondary svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* Footer */
+.footer{margin-top:20px;padding-top:16px;border-top:1px solid rgba(0,255,255,0.1);text-align:center}
+.footer a{font-size:12px;color:rgba(0,255,255,0.5);text-decoration:none}
+.footer a:hover{color:rgba(0,255,255,0.75)}
+
+/* Mobile Responsive */
+@media (max-width:768px){
+	.wrap{padding:12px;max-width:100%}
+	.card{padding:20px}
+	.header{gap:12px}
+	.icon{width:48px;height:48px}
+	.icon svg{width:24px;height:24px}
+	.title{font-size:11px}
+	.filename{font-size:15px}
+	.meta{gap:10px;padding:12px}
+	.meta-label{font-size:10px}
+	.meta-value{font-size:13px}
+	.speed-hint{font-size:11px}
+	.btn-primary{padding:12px 16px;font-size:14px}
+	.btn-secondary{padding:10px 12px;font-size:12px}
+	.btn-secondary svg{width:14px;height:14px}
+	.notif{padding:24px 32px;max-width:90%;margin:0 5%}
+	.notif-icon{width:56px;height:56px}
+	.notif-icon svg{width:28px;height:28px}
+	.notif-title{font-size:18px}
+	.notif-msg{font-size:14px}
+}
+@media (max-width:480px){
+	.wrap{padding:8px}
+	.card{padding:16px;border-radius:16px}
+	.header{flex-direction:column;text-align:center;align-items:center}
+	.filename{font-size:14px;text-align:center}
+	.meta{grid-template-columns:1fr;gap:8px}
+	.btn-primary{padding:10px 14px;font-size:13px}
+	.btn-secondary-row{flex-direction:column;gap:8px}
+	.btn-secondary{width:100%}
+	.notif{padding:20px 24px}
+}

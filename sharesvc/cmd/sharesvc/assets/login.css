@@ -1,0 +1,26 @@
+/* WARP SHARE - Login Page Styles */
+
+body{
+	display:flex;align-items:center;justify-content:center;
+	overflow:hidden;
+}
+.card{
+	max-width:420px;width:100%;margin:20px;
+}
+h2{margin-bottom:20px;text-align:center}
+label{margin:14px 0 6px;text-align:center}
+button{margin-top:20px;width:100%}
+.err{color:#ffb0b0;margin-top:12px;padding:10px;background:rgba(255,100,100,.1);border-radius:10px;border:1px solid rgba(255,100,100,.2)}
+
+/* Mobile Responsive */
+@media (max-width:768px){
+	.card{margin:12px;padding:20px}
+	h2{font-size:20px}
+	label{font-size:12px}
+	input{padding:12px;font-size:14px}
+	button{padding:12px;font-size:14px}
+}
+@media (max-width:480px){
+	.card{margin:8px;padding:16px;border-radius:16px}
+	h2{font-size:18px;margin-bottom:16px}
+}

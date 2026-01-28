@@ -1,0 +1,37 @@
+# Compiled binaries
+sharesvc/warp-share
+sharesvc/warp-admin
+sharesvc/sharesvc
+
+# Test coverage
+coverage.out
+*.out
+
+# Environment files (contain secrets)
+.env
+
+# SSL certificates (NEVER commit these!)
+certbot/
+certbot_data/
+
+# Generated nginx config (contains domain-specific paths)
+nginx/nginx.conf
+
+# Data volumes
+data/
+uploads/
+temp/
+media/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log

@@ -1,0 +1,85 @@
+# ══════════════════════════════════════════════════════════════════════════════
+# WARP SHARE - File Sharing Service
+# ══════════════════════════════════════════════════════════════════════════════
+# Quick Start:  ./setup.sh
+# Manual:       docker compose up -d && docker logs warp-share 2>&1 | grep ADMIN
+# ══════════════════════════════════════════════════════════════════════════════
+
+services:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # WARP-SHARE - File Sharing Backend (Go)
+  # ─────────────────────────────────────────────────────────────────────────────
+  warp-share:
+    build:
+      context: ./sharesvc
+    image: warp-share:local
+    container_name: warp-share
+    env_file: .env
+    environment:
+      - PUBLIC_BASE=${PUBLIC_BASE}
+      - MEDIA_ROOT=/mnt/media
+      - BROWSE_START_REL=${BROWSE_START_REL:-media}
+      - UPLOAD_TEMP_DIR=/upload_temp
+      - UPLOAD_TARGET_DIR=/mnt/media/media/share
+      - SERVER_READ_TIMEOUT=3600s
+      - TZ=${TZ:-Europe/Vienna}
+    volumes:
+      # ┌─────────────────────────────────────────────────────────────────────┐
+      # │ VOLUMES & PERMISSIONS                                               │
+      # ├─────────────────────────────────────────────────────────────────────┤
+      # │ warp_data       → Docker volume (RW) - SQLite DB, sessions, admin   │
+      # │ MEDIA_ROOT      → Your files (RO) - browse & share, no modify       │
+      # │ .../media/share → Upload target (RW) - where uploads land           │
+      # │ UPLOAD_TEMP     → Temp storage (RW) - during upload, use fast disk  │
+      # └─────────────────────────────────────────────────────────────────────┘
+      - warp_data:/data
+      - ${MEDIA_ROOT}:/mnt/media:ro
+      - ${MEDIA_ROOT}/media/share:/mnt/media/media/share
+      - ${UPLOAD_TEMP:-/tmp/warp-upload}:/upload_temp
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - default
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # NGINX - Reverse Proxy with HTTPS
+  # ─────────────────────────────────────────────────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: warp-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/security_headers.conf:/etc/nginx/security_headers.conf:ro
+      - ./nginx/proxy_params.conf:/etc/nginx/proxy_params.conf:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+      - ./certbot_data:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - default
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────────────────────────────────────
+  # CERTBOT - Let's Encrypt Certificate Management
+  # ─────────────────────────────────────────────────────────────────────────────
+  certbot:
+    image: certbot/certbot
+    container_name: warp-certbot
+    environment:
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - ./certbot_data:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    restart: unless-stopped
+
+networks:
+  default:
+    driver: bridge
+
+volumes:
+  warp_data:
+  certbot_www:

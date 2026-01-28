@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WARP SHARE — Login</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23000'/><circle cx='50' cy='50' r='35' fill='none' stroke='%2300ffff' stroke-width='3'/><circle cx='50' cy='50' r='5' fill='%2300ffff'/></svg>">
+  <link rel="stylesheet" href="{{.AdminPath}}/static/base.css">
+  <link rel="stylesheet" href="{{.AdminPath}}/static/login.css">
+</head>
+<body>
+  <div class="stars">
+    <div class="star star-1"></div>
+    <div class="star star-2"></div>
+    <div class="star star-3"></div>
+    <div class="star star-4"></div>
+    <div class="star star-5"></div>
+    <div class="star star-6"></div>
+    <div class="star star-7"></div>
+    <div class="star star-8"></div>
+    <div class="star star-9"></div>
+    <div class="star star-10"></div>
+    <div class="star star-11"></div>
+    <div class="star star-12"></div>
+    <div class="star star-13"></div>
+    <div class="star star-14"></div>
+    <div class="star star-15"></div>
+    <div class="star star-16"></div>
+    <div class="star star-17"></div>
+    <div class="star star-18"></div>
+    <div class="star star-19"></div>
+    <div class="star star-20"></div>
+    <div class="star star-21"></div>
+    <div class="star star-22"></div>
+    <div class="star star-23"></div>
+    <div class="star star-24"></div>
+    <div class="star star-25"></div>
+    <div class="star star-26"></div>
+    <div class="star star-27"></div>
+    <div class="star star-28"></div>
+    <div class="star star-29"></div>
+    <div class="star star-30"></div>
+  </div>
+  <div class="card">
+    <h2>Warp Share</h2>
+    {{if .Error}}<div class="err">{{.Error}}</div>{{end}}
+    <form method="post" action="{{.AdminPath}}/login">
+      <label for="username">Username</label>
+      <input id="username" name="username" autocomplete="username" />
+      <label for="password">Password</label>
+      <input id="password" type="password" name="password" autocomplete="current-password" />
+      <button type="submit">Login</button>
+    </form>
+  </div>
+</body>
+</html>
