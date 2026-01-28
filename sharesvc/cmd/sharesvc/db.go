@@ -253,7 +253,8 @@ func (r *Repository) BootstrapAdmin(username, password string) (generatedPasswor
 // generateSecurePassword creates a cryptographically secure password
 func generateSecurePassword() (string, error) {
 	const charset = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-	b := make([]byte, 16)
+	// 24 chars from a ~56-char alphabet ≈ 139 bits of entropy.
+	b := make([]byte, 24)
 	if _, err := randRead(b); err != nil {
 		return "", err
 	}

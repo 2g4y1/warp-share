@@ -139,8 +139,8 @@ warp-share/
 
 ```bash
 docker compose up -d
-docker exec -T warp-share sh -c 'cat /data/admin_path'
-docker exec -T warp-share sh -c 'cat /data/bootstrap_admin_password'
+docker exec warp-share sh -c 'cat /data/admin_path'
+docker exec warp-share sh -c 'cat /data/bootstrap_admin_password'
 ```
 
 ## Architecture
@@ -246,8 +246,8 @@ docker exec warp-share warp-admin list-users
 ### View admin credentials
 
 ```bash
-docker exec -T warp-share sh -c 'cat /data/admin_path'
-docker exec -T warp-share sh -c 'cat /data/bootstrap_admin_password'
+docker exec warp-share sh -c 'cat /data/admin_path'
+docker exec warp-share sh -c 'cat /data/bootstrap_admin_password'
 ```
 
 ### Regenerate certificate (local mode)
