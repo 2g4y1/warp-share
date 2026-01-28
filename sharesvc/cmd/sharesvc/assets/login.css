@@ -17,6 +17,10 @@ button{margin-top:14px;width:100%}
 .passkey-divider span{background:rgba(4,16,26,0.98);padding:0 10px}
 .passkey-hint{margin-top:8px;font-size:12px;opacity:.7;text-align:center}
 .passkey-btn{margin-top:0;width:100%;border-color:rgba(0,200,220,.5)}
+.hint-row{margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;opacity:.7}
+.hint-tooltip{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;border:1px solid rgba(0,255,255,.35);cursor:help;font-weight:700;position:relative}
+.hint-tooltip::after{content:attr(data-tip);position:absolute;left:50%;transform:translate(-50%,-6px);bottom:100%;white-space:nowrap;background:rgba(4,16,26,.98);border:1px solid rgba(0,255,255,.25);padding:6px 8px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .15s ease;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.hint-tooltip:hover::after{opacity:1}
 .err{color:#ffb0b0;margin-top:12px;padding:10px;background:rgba(255,100,100,.1);border-radius:10px;border:1px solid rgba(255,100,100,.2)}
 
 /* Mobile Responsive */

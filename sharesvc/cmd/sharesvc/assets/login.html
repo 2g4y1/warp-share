@@ -52,6 +52,12 @@
       <input id="password" type="password" name="password" autocomplete="current-password" />
       <button type="submit" class="primary-btn">Login</button>
     </form>
+    {{if .Error}}
+    <div class="hint-row">
+      <span class="hint-label">Password reset</span>
+      <span class="hint-tooltip" data-tip="Run: docker exec warp-share warp-admin reset-password admin">?</span>
+    </div>
+    {{end}}
     {{if .PasskeysEnabled}}
     <div class="passkey-divider"><span>or use a passkey</span></div>
     <button type="button" id="passkey_login" class="passkey-btn">Login with Passkey</button>

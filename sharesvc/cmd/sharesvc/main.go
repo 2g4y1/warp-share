@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"sync"
 	"syscall"
+	"time"
 	"unicode/utf8"
 
 	"github.com/go-webauthn/webauthn/webauthn"
@@ -184,6 +185,9 @@ func main() {
 	go a.cleanupExpiredSessions()
 	go a.cleanupExpiredLinks()
 	go a.cleanupExpiredWebAuthnChallenges()
+	if cfg.UploadTempDir != "" {
+		go cleanupTempDirPeriodic(cfg.UploadTempDir, cfg.TempCleanupInterval, cfg.TempCleanupAge)
+	}
 	go cleanupLoginAttempts()
 
 	// Signal handling for graceful shutdown
@@ -253,6 +257,10 @@ func (a *app) render(w http.ResponseWriter, tmpl *template.Template, data any) {
 // cleanupTempDir removes all files from the temp directory on startup.
 // This is safe because no uploads can be active when the server starts.
 func cleanupTempDir(tempDir string) {
+	fi, err := os.Stat(tempDir)
+	if err == nil && !fi.IsDir() {
+		return
+	}
 	entries, err := os.ReadDir(tempDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -282,5 +290,65 @@ func cleanupTempDir(tempDir string) {
 
 	if cleaned > 0 {
 		log.Printf("Cleaned up %d orphaned item(s) from temp directory", cleaned)
+	}
+}
+
+// cleanupTempDirOlderThan removes files/dirs older than the provided age.
+func cleanupTempDirOlderThan(tempDir string, age time.Duration) {
+	fi, err := os.Stat(tempDir)
+	if err == nil && !fi.IsDir() {
+		return
+	}
+	entries, err := os.ReadDir(tempDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return
+		}
+		log.Printf("Warning: could not read temp dir %s: %v", tempDir, err)
+		return
+	}
+
+	cutoff := time.Now().Add(-age)
+	var cleaned int
+	for _, entry := range entries {
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+		if info.ModTime().After(cutoff) {
+			continue
+		}
+		path := filepath.Join(tempDir, entry.Name())
+		if entry.IsDir() {
+			if err := os.RemoveAll(path); err == nil {
+				cleaned++
+			}
+		} else {
+			if err := os.Remove(path); err == nil {
+				cleaned++
+			}
+		}
+	}
+
+	if cleaned > 0 {
+		log.Printf("Cleaned up %d old item(s) from temp directory", cleaned)
+	}
+}
+
+// cleanupTempDirPeriodic periodically removes old temp files.
+func cleanupTempDirPeriodic(tempDir string, interval, age time.Duration) {
+	if interval <= 0 || age <= 0 {
+		return
+	}
+	ticker := newTicker(interval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-shutdownChan:
+			log.Println("Temp cleanup goroutine shutting down")
+			return
+		case <-ticker.C:
+			cleanupTempDirOlderThan(tempDir, age)
+		}
 	}
 }

@@ -22,6 +22,8 @@ type config struct {
 	BrowseStartRel  string
 	UploadTempDir   string
 	UploadTargetDir string
+	TempCleanupInterval time.Duration
+	TempCleanupAge      time.Duration
 
 	BootstrapAdminUser string
 	BootstrapAdminPass string
@@ -55,6 +57,8 @@ func loadConfig() (config, error) {
 		DataDir:        "/data",
 		MediaRoot:      "/mnt/media",
 		BrowseStartRel: "media",
+		TempCleanupInterval: 6 * time.Hour,
+		TempCleanupAge:      24 * time.Hour,
 		SessionTTL:     24 * time.Hour,
 		GrantTTL:       7 * 24 * time.Hour,
 
@@ -138,6 +142,20 @@ func loadConfig() (config, error) {
 	}
 	if v := strings.TrimSpace(os.Getenv("UPLOAD_TEMP_DIR")); v != "" {
 		cfg.UploadTempDir = v
+	}
+	if v := strings.TrimSpace(os.Getenv("TEMP_CLEANUP_INTERVAL")); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return config{}, fmt.Errorf("invalid TEMP_CLEANUP_INTERVAL: %w", err)
+		}
+		cfg.TempCleanupInterval = d
+	}
+	if v := strings.TrimSpace(os.Getenv("TEMP_CLEANUP_AGE")); v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return config{}, fmt.Errorf("invalid TEMP_CLEANUP_AGE: %w", err)
+		}
+		cfg.TempCleanupAge = d
 	}
 	if v := strings.TrimSpace(os.Getenv("UPLOAD_TARGET_DIR")); v != "" {
 		cfg.UploadTargetDir = v

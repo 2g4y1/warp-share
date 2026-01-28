@@ -55,6 +55,31 @@ func TestCleanupTempDirMissingAndFile(t *testing.T) {
 	}
 }
 
+func TestCleanupTempDirOlderThan(t *testing.T) {
+	tmpDir := t.TempDir()
+	oldFile := filepath.Join(tmpDir, "old.txt")
+	newFile := filepath.Join(tmpDir, "new.txt")
+	if err := os.WriteFile(oldFile, []byte("x"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(newFile, []byte("y"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	oldTime := time.Now().Add(-48 * time.Hour)
+	if err := os.Chtimes(oldFile, oldTime, oldTime); err != nil {
+		t.Fatal(err)
+	}
+
+	cleanupTempDirOlderThan(tmpDir, 24*time.Hour)
+
+	if _, err := os.Stat(oldFile); !os.IsNotExist(err) {
+		t.Fatalf("expected old file removed, err=%v", err)
+	}
+	if _, err := os.Stat(newFile); err != nil {
+		t.Fatalf("expected new file to remain, err=%v", err)
+	}
+}
+
 func TestRenderTemplateError(t *testing.T) {
 	a := newTestApp(t)
 	tmpl := template.Must(template.New("err").Funcs(template.FuncMap{

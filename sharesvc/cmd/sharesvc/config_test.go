@@ -67,6 +67,8 @@ func TestLoadConfig(t *testing.T) {
 	origBrowseStart := os.Getenv("BROWSE_START_REL")
 	origUploadTemp := os.Getenv("UPLOAD_TEMP_DIR")
 	origUploadTarget := os.Getenv("UPLOAD_TARGET_DIR")
+	origTempCleanupInterval := os.Getenv("TEMP_CLEANUP_INTERVAL")
+	origTempCleanupAge := os.Getenv("TEMP_CLEANUP_AGE")
 	origSessionTTL := os.Getenv("SESSION_TTL")
 	origGrantTTL := os.Getenv("GRANT_TTL")
 	origReadHeaderTimeout := os.Getenv("SERVER_READ_HEADER_TIMEOUT")
@@ -96,6 +98,8 @@ func TestLoadConfig(t *testing.T) {
 		_ = os.Setenv("BROWSE_START_REL", origBrowseStart)
 		_ = os.Setenv("UPLOAD_TEMP_DIR", origUploadTemp)
 		_ = os.Setenv("UPLOAD_TARGET_DIR", origUploadTarget)
+		_ = os.Setenv("TEMP_CLEANUP_INTERVAL", origTempCleanupInterval)
+		_ = os.Setenv("TEMP_CLEANUP_AGE", origTempCleanupAge)
 		_ = os.Setenv("SESSION_TTL", origSessionTTL)
 		_ = os.Setenv("GRANT_TTL", origGrantTTL)
 		_ = os.Setenv("SERVER_READ_HEADER_TIMEOUT", origReadHeaderTimeout)
@@ -220,6 +224,8 @@ func TestLoadConfig(t *testing.T) {
 		_ = os.Setenv("BROWSE_START_REL", "/browse")
 		_ = os.Setenv("UPLOAD_TEMP_DIR", "/tmp/uploads")
 		_ = os.Setenv("UPLOAD_TARGET_DIR", "/data/uploads")
+		_ = os.Setenv("TEMP_CLEANUP_INTERVAL", "2h")
+		_ = os.Setenv("TEMP_CLEANUP_AGE", "48h")
 		_ = os.Setenv("SESSION_TTL", "2h")
 		_ = os.Setenv("GRANT_TTL", "3h")
 		_ = os.Setenv("SERVER_READ_HEADER_TIMEOUT", "1s")
@@ -250,6 +256,9 @@ func TestLoadConfig(t *testing.T) {
 		}
 		if cfg.UploadTempDir != "/tmp/uploads" || cfg.UploadTargetDir != "/data/uploads" {
 			t.Errorf("upload dirs = %q/%q", cfg.UploadTempDir, cfg.UploadTargetDir)
+		}
+		if cfg.TempCleanupInterval.Hours() != 2 || cfg.TempCleanupAge.Hours() != 48 {
+			t.Errorf("temp cleanup not loaded")
 		}
 		if cfg.SessionTTL.Hours() != 2 || cfg.GrantTTL.Hours() != 3 {
 			t.Errorf("ttls = %v/%v", cfg.SessionTTL, cfg.GrantTTL)
