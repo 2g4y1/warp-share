@@ -68,6 +68,20 @@ else
     read -r DOMAIN
     [ -z "$DOMAIN" ] && { error "Domain required"; exit 1; }
 
+    INCLUDE_WWW=false
+    if [[ "$DOMAIN" != www.* ]]; then
+        DOTS=$(printf '%s' "$DOMAIN" | awk -F'.' '{print NF-1}')
+        if [ "$DOTS" = "1" ]; then
+            echo -e -n "${CYAN}▸${NC} Also add www.${DOMAIN} ${DIM}(recommended for apex domains)${NC}? ${DIM}[Y/n]${NC}: "
+            read -r WWW_CHOICE
+            [[ -z "$WWW_CHOICE" || "$WWW_CHOICE" =~ ^[Yy]$ ]] && INCLUDE_WWW=true
+        else
+            echo -e -n "${CYAN}▸${NC} Also add www.${DOMAIN} ${DIM}(optional)${NC}? ${DIM}[y/N]${NC}: "
+            read -r WWW_CHOICE
+            [[ "$WWW_CHOICE" =~ ^[Yy]$ ]] && INCLUDE_WWW=true
+        fi
+    fi
+
     echo -e -n "${CYAN}▸${NC} Email for Let's Encrypt ${DIM}(optional)${NC}: "
     read -r EMAIL
 fi
@@ -147,14 +161,22 @@ else
             -subj "/CN=${DOMAIN}" 2>/dev/null
         success "Temporary certificate created"
 
-        # DNS check
-        SERVER_IP=$(curl -s -4 ifconfig.me 2>/dev/null)
+        # DNS check (IPv4 + IPv6)
+        SERVER_IP=$(curl -s -4 --max-time 4 ifconfig.me 2>/dev/null)
         DOMAIN_IP=$(dig +short "$DOMAIN" A 2>/dev/null | head -1)
         if [ -n "$SERVER_IP" ] && [ -n "$DOMAIN_IP" ] && [ "$SERVER_IP" != "$DOMAIN_IP" ]; then
-            warn "DNS mismatch: $DOMAIN → $DOMAIN_IP (server: $SERVER_IP)"
+            warn "DNS mismatch (IPv4): $DOMAIN → $DOMAIN_IP (server: $SERVER_IP)"
             echo -e -n "${YELLOW}▸${NC} Continue anyway? (y/N): "
             read -r response
             [[ ! "$response" =~ ^[Yy]$ ]] && exit 1
+        fi
+
+        SERVER_IP6=$(curl -s -6 --max-time 4 ifconfig.me 2>/dev/null)
+        DOMAIN_IP6=$(dig +short "$DOMAIN" AAAA 2>/dev/null | head -1)
+        if [ -n "$SERVER_IP6" ] && [ -z "$DOMAIN_IP6" ]; then
+            warn "No AAAA record found for $DOMAIN (IPv6 available on server: $SERVER_IP6)"
+        elif [ -n "$SERVER_IP6" ] && [ -n "$DOMAIN_IP6" ] && [ "$SERVER_IP6" != "$DOMAIN_IP6" ]; then
+            warn "DNS mismatch (IPv6): $DOMAIN → $DOMAIN_IP6 (server: $SERVER_IP6)"
         fi
     fi
 fi
@@ -180,7 +202,11 @@ elif ! openssl x509 -in "$CERT_PATH" -noout -issuer 2>/dev/null | grep -q "Let's
     rm -rf "${SCRIPT_DIR}/certbot_data/renewal/${DOMAIN}.conf"
 
     info "Requesting Let's Encrypt certificate..."
-    CERTBOT_ARGS="certonly --webroot -w /var/www/certbot -d $DOMAIN --agree-tos --no-eff-email --non-interactive"
+    CERTBOT_ARGS="certonly --webroot -w /var/www/certbot -d $DOMAIN"
+    if [ "${INCLUDE_WWW:-false}" = true ]; then
+        CERTBOT_ARGS="$CERTBOT_ARGS -d www.$DOMAIN"
+    fi
+    CERTBOT_ARGS="$CERTBOT_ARGS --agree-tos --no-eff-email --non-interactive"
     [ -n "$EMAIL" ] && CERTBOT_ARGS="$CERTBOT_ARGS --email $EMAIL" || CERTBOT_ARGS="$CERTBOT_ARGS --register-unsafely-without-email"
 
     if $DOCKER_COMPOSE run --rm --entrypoint certbot certbot $CERTBOT_ARGS; then

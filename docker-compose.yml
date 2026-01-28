@@ -79,6 +79,10 @@ services:
 networks:
   default:
     driver: bridge
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: "fd00:dead:beee:2::/64"
 
 volumes:
   warp_data:

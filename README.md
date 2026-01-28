@@ -36,6 +36,12 @@
 - Ports 80 and 443
 - For public mode: domain pointing to your server
 
+### IPv6 readiness (public mode)
+
+If your server has a public IPv6, add an AAAA record for your domain pointing to that IPv6 and allow inbound TCP 80/443. nginx already listens on IPv6.
+
+Also make sure your TLS certificate covers the hostname users/testers will hit (many checks use `www`). If you publish `www` (A/AAAA), include `www.<domain>` as a SAN in the Let's Encrypt certificate.
+
 ## Quick Start
 
 ```bash
