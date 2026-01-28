@@ -33,7 +33,7 @@
 
 - Docker + Docker Compose (v2)
 - OpenSSL
-- Ports 80 and 443
+- Ports 80 and 443 (defaults; can be overridden via `HTTP_PORT` / `HTTPS_PORT`)
 - For public mode: domain pointing to your server
 
 ### IPv6 readiness (public mode)
@@ -95,6 +95,8 @@ PUBLIC_BASE=https://share.example.com
 DOMAIN=share.example.com
 MEDIA_ROOT=/srv/files
 UPLOAD_TEMP=./temp
+HTTP_PORT=80
+HTTPS_PORT=443
 TZ=Europe/Vienna
 LOCAL_MODE=false
 CERTBOT_EMAIL=admin@example.com
@@ -110,6 +112,8 @@ These are set in `.env` and used by `docker-compose.yml`:
 | `DOMAIN` | Domain/hostname for SSL certificate |
 | `MEDIA_ROOT` | Host path to shared files (required) |
 | `UPLOAD_TEMP` | Host path for upload temp (default: `./temp`) |
+| `HTTP_PORT` | Host port to publish HTTP (default: `80`) |
+| `HTTPS_PORT` | Host port to publish HTTPS (default: `443`) |
 | `TZ` | Timezone (default: `Europe/Vienna`) |
 | `LOCAL_MODE` | `true` for self-signed cert |
 | `CERTBOT_EMAIL` | Email for Let's Encrypt (optional) |
