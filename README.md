@@ -33,8 +33,8 @@
 
 - Docker + Docker Compose (v2)
 - OpenSSL
-- Ports 80 and 443 (defaults; can be overridden via `HTTP_PORT` / `HTTPS_PORT`)
-- For public mode: domain pointing to your server
+- Host ports (defaults: 80/443; can be overridden via `HTTP_PORT` / `HTTPS_PORT`)
+- For public mode: domain pointing to your server, plus inbound TCP 80/443 reachable from the internet (or port-forwarded)
 
 ### IPv6 readiness (public mode)
 
@@ -59,6 +59,7 @@ For internet-accessible deployments.
 - Requires domain pointing to server
 - Automatic SSL via Let's Encrypt
 - Certificate auto-renewal
+- Requires inbound TCP 80/443 (HTTP-01). If you change `HTTP_PORT`/`HTTPS_PORT`, forward external 80 → local `HTTP_PORT` and external 443 → local `HTTPS_PORT`.
 
 ### 🏠 Local Mode (Option 2)
 
@@ -67,6 +68,7 @@ For LAN/localhost deployments.
 - Works with `localhost`, IPs, or local hostnames
 - Self-signed certificate (365 days)
 - No internet required
+- Ports are flexible (e.g. `HTTP_PORT=8080`, `HTTPS_PORT=8443`)
 
 ## What setup.sh does
 
@@ -150,7 +152,7 @@ docker exec warp-share sh -c 'cat /data/bootstrap_admin_password'
 ## Architecture
 
 ```
-Client → nginx (443) → warp-share → SQLite + Files
+Client → nginx (HTTPS_PORT, default 443) → warp-share → SQLite + Files
               ↓
          certbot (SSL renewal)
 ```
@@ -198,6 +200,7 @@ Client → nginx (443) → warp-share → SQLite + Files
 - Generated on first start if `BOOTSTRAP_ADMIN_PASSWORD` is not set
 - Stored in `/data/bootstrap_admin_password` with `0600` permissions
 - Not logged to stdout (delete the file after first login)
+- `setup.sh` prints the password once and can optionally delete the file immediately
 
 ### File Access
 

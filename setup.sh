@@ -327,7 +327,19 @@ if [ "$LOCAL_MODE" = true ]; then
 fi
 if [ -n "$ADMIN_PASS" ]; then
     echo -e "  ${YELLOW}🔑 Password: ${ADMIN_PASS}${NC}"
-    echo -e "  ${DIM}   Stored in /data/bootstrap_admin_password (delete after login).${NC}"
+    echo -e "  ${DIM}   Stored in /data/bootstrap_admin_password.${NC}"
+
+    if [ -t 0 ]; then
+        echo -e -n "${CYAN}▸${NC} Delete /data/bootstrap_admin_password now? ${DIM}[Y/n]${NC}: "
+        read -r DEL_PASSFILE
+        if [[ -z "$DEL_PASSFILE" || "$DEL_PASSFILE" =~ ^[Yy]$ ]]; then
+            if docker exec warp-share sh -c 'rm -f /data/bootstrap_admin_password' >/dev/null 2>&1; then
+                echo -e "  ${GREEN}✓${NC} ${DIM}Deleted /data/bootstrap_admin_password${NC}"
+            else
+                echo -e "  ${YELLOW}⚠${NC} ${DIM}Could not delete /data/bootstrap_admin_password (delete it manually after login).${NC}"
+            fi
+        fi
+    fi
 else
     echo -e "  ${DIM}ℹ  Existing install – password unchanged${NC}"
 fi
