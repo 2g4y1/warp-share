@@ -155,6 +155,7 @@ func main() {
 	mux.HandleFunc("GET /healthz", a.handleHealth)
 	mux.HandleFunc("GET /warp-share.js", a.handlePublicAppJS)
 	mux.HandleFunc("GET /warp-share.css", a.handlePublicCSS)
+	mux.HandleFunc("GET /sw.js", a.handleServiceWorker)
 	mux.HandleFunc("GET /", a.handleRoot)
 	mux.HandleFunc("GET "+cfg.AdminPath+"/", a.requireAdmin(a.handleAdminHome))
 	mux.HandleFunc("GET "+cfg.AdminPath+"/static/app.js", a.handleAdminStaticAppJS)           // No auth - just static JS

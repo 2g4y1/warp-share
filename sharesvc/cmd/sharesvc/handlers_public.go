@@ -36,6 +36,14 @@ func (a *app) handlePublicCSS(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(landingCSS)
 }
 
+func (a *app) handleServiceWorker(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/javascript; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Service-Worker-Allowed", "/")
+	data, _ := content.ReadFile("assets/sw.js")
+	_, _ = w.Write(data)
+}
+
 func (a *app) handleRoot(w http.ResponseWriter, r *http.Request) {
 	// Only two-segment paths are considered download links: /<share>/<token>
 	trimmed := strings.Trim(r.URL.Path, "/")
