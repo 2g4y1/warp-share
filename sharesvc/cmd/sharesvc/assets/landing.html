@@ -8,6 +8,8 @@
 	<link rel="stylesheet" href="/warp-share.css">
 	<script src="/warp-share.js" defer></script>
 	<script>
+		// Register service worker for offline caching
+		// Errors are intentionally ignored - service worker is optional enhancement
 		if ('serviceWorker' in navigator) {
 			navigator.serviceWorker.register('/sw.js').catch(function() {});
 		}

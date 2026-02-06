@@ -64,16 +64,20 @@ self.addEventListener('fetch', (event) => {
 					return response;
 				}
 
-				// Clone the response
-				const responseToCache = response.clone();
-
 				// Cache static assets only
 				if (
 					event.request.url.includes('/warp-share.css') ||
 					event.request.url.includes('/warp-share.js')
 				) {
+					// Clone the response before caching (response can only be consumed once)
+					const responseToCache = response.clone();
+					
+					// Cache asynchronously without blocking the response
 					caches.open(CACHE_VERSION).then((cache) => {
-						cache.put(event.request, responseToCache);
+						cache.put(event.request, responseToCache).catch((err) => {
+							// Silently ignore cache errors - caching is optional enhancement
+							console.warn('Cache put failed:', err);
+						});
 					});
 				}
 
