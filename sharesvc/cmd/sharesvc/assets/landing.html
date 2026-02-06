@@ -7,6 +7,13 @@
 	<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23000'/><circle cx='50' cy='50' r='35' fill='none' stroke='%2300ffff' stroke-width='3'/><circle cx='50' cy='50' r='5' fill='%2300ffff'/></svg>">
 	<link rel="stylesheet" href="/warp-share.css">
 	<script src="/warp-share.js" defer></script>
+	<script>
+		// Register service worker for offline caching
+		// Errors are intentionally ignored - service worker is optional enhancement
+		if ('serviceWorker' in navigator) {
+			navigator.serviceWorker.register('/sw.js').catch(function() {});
+		}
+	</script>
 </head>
 <body data-file-name="{{.FileName}}" data-home-url="{{.PublicBase}}">
 	<div class="wrap">
