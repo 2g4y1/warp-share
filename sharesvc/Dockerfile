@@ -12,7 +12,7 @@ COPY . .
 RUN CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o /out/warp-share ./cmd/sharesvc && \
     CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o /out/warp-admin ./cmd/sharesvc-admin
 
-FROM alpine:3.23
+FROM alpine:3.24
 RUN apk add --no-cache ca-certificates su-exec
 
 # Match the common PUID/PGID=1000 pattern used by other services here.
